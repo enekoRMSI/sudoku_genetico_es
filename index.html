@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sudoku Genético - Expresión Génica y Dogma Central</title>
+  <style>
+    :root {
+      --bg-main: #F8FAF9;
+      --bg-card: #FFFFFF;
+      --text-main: #2D3748;
+      --text-muted: #718096;
+      --border-color: #E2E8F0;
+      
+      /* Colores suaves temáticos por hilera molecular */
+      --adn-cod-bg: #FFFDF5;
+      --adn-cod-border: #FDE68A;
+      --adn-cod-tag: #D97706;
+      
+      --adn-molde-bg: #FFF5F5;
+      --adn-molde-border: #FECACA;
+      --adn-molde-tag: #DC2626;
+      
+      --arnm-bg: #F0FDF4;
+      --arnm-border: #A7F3D0;
+      --arnm-tag: #059669;
+      
+      --arnt-bg: #F0F9FF;
+      --arnt-border: #BAE6FD;
+      --arnt-tag: #0284C7;
+      
+      --aa-bg: #FAF5FF;
+      --aa-border: #E9D5FF;
+      --aa-tag: #7C3AED;
+      
+      /* Bases nitrogenadas - Tonos suaves diferenciados (no interfieren con acierto/error) */
+      /* Adenina: Violeta / Lavanda suave */
+      --base-a-bg: #F3E8FF;
+      --base-a-color: #7C3AED;
+      --base-a-border: #D8B4FE;
+
+      /* Timina: Ámbar / Amarillo cálido */
+      --base-t-bg: #FEF9C3;
+      --base-t-color: #A16207;
+      --base-t-border: #FDE047;
+
+      /* Uracilo: Albaricoque / Melocotón suave */
+      --base-u-bg: #FFEDD5;
+      --base-u-color: #C2410C;
+      --base-u-border: #FDBA74;
+
+      /* Citosina: Azul cielo suave */
+      --base-c-bg: #DBEAFE;
+      --base-c-color: #1D4ED8;
+      --base-c-border: #93C5FD;
+
+      /* Guanina: Verde menta suave */
+      --base-g-bg: #DCFCE7;
+      --base-g-color: #15803D;
+      --base-g-border: #86EFAC;
+
+      /* Estados de validación claramente diferenciados */
+      --success-bg: #DCFCE7;
+      --success-border: #10B981;
+      --error-bg: #FEE2E2;
+      --error-border: #EF4444;
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Encabezado */
+    .header {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-titles h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1E293B;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-titles p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .badge-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #EEF2FF;
+      color: #4F46E5;
+      font-size: 1.25rem;
+    }
+
+    /* Marcador de Aciertos */
+    .scoreboard {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .score-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      text-align: center;
+      min-width: 90px;
+    }
+
+    .score-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .score-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .score-card.highlight {
+      background: #F0FDF4;
+      border-color: #BBF7D0;
+    }
+
+    .score-card.highlight .value {
+      color: #16A34A;
+    }
+
+    /* Barra de Herramientas y Opciones */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--bg-card);
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.16s ease-in-out;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background: #10B981;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #059669;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-secondary {
+      background: #F1F5F9;
+      color: #334155;
+      border-color: #CBD5E1;
+    }
+    .btn-secondary:hover {
+      background: #E2E8F0;
+    }
+
+    .btn-accent {
+      background: #6366F1;
+      color: white;
+    }
+    .btn-accent:hover {
+      background: #4F46E5;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #475569;
+      border-color: #CBD5E1;
+    }
+    .btn-outline:hover {
+      background: #F8FAFC;
+      border-color: #94A3B8;
+    }
+
+    select.select-custom {
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #CBD5E1;
+      background: white;
+      font-size: 0.85rem;
+      color: #334155;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Tablero del Sudoku */
+    .board-container {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-soft);
+      overflow-x: auto;
+    }
+
+    .sudoku-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 740px;
+    }
+
+    /* Filas y Encabezados */
+    .row-header {
+      width: 210px;
+      min-width: 175px;
+      padding: 10px 12px;
+      font-weight: 600;
+      font-size: 0.86rem;
+      text-align: left;
+      border-bottom: 2px solid #F1F5F9;
+      vertical-align: middle;
+    }
+
+    .row-header .title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+
+    .row-header .polarity {
+      font-size: 0.72rem;
+      font-weight: normal;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .codon-col-header {
+      padding: 7px 4px;
+      text-align: center;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748B;
+      background: #F8FAFC;
+    }
+
+    /* Casillas */
+    .cell-td {
+      padding: 4px;
+      text-align: center;
+      vertical-align: middle;
+      border-bottom: 1px solid #F1F5F9;
+    }
+
+    .triplet-separator-right {
+      border-right: 2px solid #E2E8F0;
+    }
+
+    .cell-input-wrapper {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      margin: 0 auto;
+    }
+
+    .cell-base {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid #CBD5E1;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: white;
+      color: #1E293B;
+      outline: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .cell-base:focus {
+      border-color: #6366F1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      transform: scale(1.04);
+      z-index: 2;
+    }
+
+    /* Casillas dadas como pista */
+    .cell-base.is-clue {
+      background: #F8FAFC;
+      border-color: #E2E8F0;
+      cursor: default;
+      color: #0F172A;
+    }
+
+    /* Colores temáticos por fila molecular */
+    tr.row-adn-cod { background-color: var(--adn-cod-bg); }
+    tr.row-adn-molde { background-color: var(--adn-molde-bg); }
+    tr.row-arnm { background-color: var(--arnm-bg); }
+    tr.row-arnt { background-color: var(--arnt-bg); }
+    tr.row-aa { background-color: var(--aa-bg); }
+
+    /* Estilos dinámicos de las bases con la nueva paleta de colores suaves */
+    .val-A { background-color: var(--base-a-bg) !important; color: var(--base-a-color) !important; border-color: var(--base-a-border) !important; }
+    .val-T { background-color: var(--base-t-bg) !important; color: var(--base-t-color) !important; border-color: var(--base-t-border) !important; }
+    .val-U { background-color: var(--base-u-bg) !important; color: var(--base-u-color) !important; border-color: var(--base-u-border) !important; }
+    .val-C { background-color: var(--base-c-bg) !important; color: var(--base-c-color) !important; border-color: var(--base-c-border) !important; }
+    .val-G { background-color: var(--base-g-bg) !important; color: var(--base-g-color) !important; border-color: var(--base-g-border) !important; }
+
+    /* Estados de acierto / error inequívocos */
+    .cell-base.correct {
+      background-color: var(--success-bg) !important;
+      border-color: var(--success-border) !important;
+      color: #065F46 !important;
+      box-shadow: 0 0 0 2px #10B981 !important;
+    }
+
+    .cell-base.incorrect {
+      background-color: var(--error-bg) !important;
+      border-color: var(--error-border) !important;
+      color: #991B1B !important;
+      box-shadow: 0 0 0 2px #EF4444 !important;
+      animation: shake 0.35s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Casilla Aminoácido */
+    .aa-cell-wrapper {
+      padding: 5px;
+    }
+
+    .aa-btn {
+      width: 100%;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--aa-border);
+      background: white;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #5B21B6;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .aa-btn:hover:not(.is-clue) {
+      background: #F3E8FF;
+      border-color: #A855F7;
+    }
+
+    .aa-btn.is-clue {
+      background: #F5F3FF;
+      cursor: default;
+      color: #6B21A8;
+    }
+
+    .aa-btn.correct {
+      background: var(--success-bg) !important;
+      border-color: var(--success-border) !important;
+      color: #065F46 !important;
+      box-shadow: 0 0 0 2px #10B981 !important;
+    }
+
+    .aa-btn.incorrect {
+      background: var(--error-bg) !important;
+      border-color: var(--error-border) !important;
+      color: #991B1B !important;
+      box-shadow: 0 0 0 2px #EF4444 !important;
+      animation: shake 0.35s ease-in-out;
+    }
+
+    /* Teclado en pantalla */
+    .keypad-container {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .keypad-keys {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .key-btn {
+      width: 44px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .key-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    }
+
+    .key-btn.btn-a { background: var(--base-a-bg); color: var(--base-a-color); border: 1.5px solid var(--base-a-border); }
+    .key-btn.btn-t { background: var(--base-t-bg); color: var(--base-t-color); border: 1.5px solid var(--base-t-border); }
+    .key-btn.btn-u { background: var(--base-u-bg); color: var(--base-u-color); border: 1.5px solid var(--base-u-border); }
+    .key-btn.btn-c { background: var(--base-c-bg); color: var(--base-c-color); border: 1.5px solid var(--base-c-border); }
+    .key-btn.btn-g { background: var(--base-g-bg); color: var(--base-g-color); border: 1.5px solid var(--base-g-border); }
+    .key-btn.btn-del { width: auto; padding: 0 12px; font-size: 0.82rem; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+
+    /* Modales */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: var(--radius-lg);
+      max-width: 720px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      color: #1E293B;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #94A3B8;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close-btn:hover { color: #1E293B; }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+    }
+
+    /* Selector de Aminoácidos */
+    .aa-grid-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .aa-select-option {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .aa-select-option:hover {
+      background: #EDE9FE;
+      border-color: #C4B5FD;
+      transform: translateY(-1px);
+    }
+
+    .aa-select-option .symbol {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #6B21A8;
+    }
+
+    .aa-select-option .name {
+      font-size: 0.72rem;
+      color: #64748B;
+      margin-top: 2px;
+    }
+
+    /* Tabla del Código Genético */
+    .genetic-code-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .genetic-code-table th, .genetic-code-table td {
+      border: 1px solid #E2E8F0;
+      padding: 6px 4px;
+    }
+
+    .genetic-code-table th {
+      background: #F1F5F9;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .gc-codon-pill {
+      display: inline-block;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin: 1px;
+      font-size: 0.72rem;
+    }
+
+    /* Banner de feedback */
+    .feedback-banner {
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .feedback-banner.success {
+      display: flex;
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    .feedback-banner.partial {
+      display: flex;
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    .feedback-banner.error {
+      display: flex;
+      background: #FEF2F2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
+
+    /* Canvas de Confeti */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="container">
+    
+    <!-- ENCABEZADO -->
+    <header class="header">
+      <div class="header-titles">
+        <h1>
+          <span class="badge-icon">🧬</span>
+          Sudoku Genético
+        </h1>
+        <p>Completa la cuadrícula combinando las tripletas de ADN, ARNm, ARNt y aminoácidos.</p>
+      </div>
+
+      <!-- Marcador de Aciertos -->
+      <div class="scoreboard">
+        <div class="score-card highlight">
+          <div class="label">Aciertos</div>
+          <div class="value" id="stat-hits">0 / 0</div>
+        </div>
+        <div class="score-card">
+          <div class="label">Precisión</div>
+          <div class="value" id="stat-accuracy">0%</div>
+        </div>
+        <div class="score-card">
+          <div class="label">Completados</div>
+          <div class="value" id="stat-completed">0</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- BARRA DE CONTROLES -->
+    <div class="controls-bar">
+      <div class="controls-group">
+        <button class="btn btn-primary" id="btn-check">
+          <span>✓</span> Comprobar solución
+        </button>
+        <button class="btn btn-secondary" id="btn-restart">
+          <span>🔄</span> Reiniciar (Nuevo Juego)
+        </button>
+        <button class="btn btn-outline" id="btn-hint" title="Revela una casilla si te quedas atascado">
+          <span>💡</span> Pedir Pista
+        </button>
+      </div>
+
+      <div class="controls-group">
+        <label for="select-difficulty" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Dificultad:</label>
+        <select id="select-difficulty" class="select-custom">
+          <option value="easy">Fácil (60% pistas)</option>
+          <option value="medium" selected>Medio (45% pistas)</option>
+          <option value="hard">Difícil (30% pistas)</option>
+        </select>
+
+        <label for="select-codons" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Codones:</label>
+        <select id="select-codons" class="select-custom">
+          <option value="4">4 Codones</option>
+          <option value="5" selected>5 Codones</option>
+          <option value="6">6 Codones</option>
+        </select>
+
+        <button class="btn btn-accent" id="btn-open-code">
+          <span>📖</span> Código Genético
+        </button>
+      </div>
+    </div>
+
+    <!-- BANNER DE FEEDBACK -->
+    <div id="feedback-banner" class="feedback-banner">
+      <span id="feedback-msg">¡Completa las casillas vacías y pulsa Comprobar!</span>
+      <span id="feedback-sub" style="font-size: 0.8rem; font-weight: normal;"></span>
+    </div>
+
+    <!-- TABLERO SUDOKU -->
+    <main class="board-container">
+      <table class="sudoku-table" id="sudoku-table">
+        <!-- Renderizado dinámicamente mediante JavaScript -->
+      </table>
+    </main>
+
+    <!-- TECLADO EN PANTALLA Y AYUDA RÁPIDA -->
+    <div class="keypad-container">
+      <div style="font-size: 0.84rem; color: var(--text-muted); font-weight: 600;">
+        Escribe directamente las bases o pulsa sobre los botones:
+      </div>
+      <div class="keypad-keys">
+        <button class="key-btn btn-a" data-key="A">A</button>
+        <button class="key-btn btn-t" data-key="T">T</button>
+        <button class="key-btn btn-u" data-key="U">U</button>
+        <button class="key-btn btn-c" data-key="C">C</button>
+        <button class="key-btn btn-g" data-key="G">G</button>
+        <button class="key-btn btn-del" data-key="BACKSPACE">⌫ Borrar</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: SELECTOR DE AMINOÁCIDO -->
+  <div class="modal-overlay" id="modal-aa-selector">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 id="modal-aa-title">Selecciona el Aminoácido</h3>
+        <button class="close-btn" id="btn-close-aa">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 10px;">
+          Deduce el aminoácido codificado por el triplete de ARNm (5' → 3'):
+        </p>
+        <div class="aa-grid-selector" id="aa-options-container">
+          <!-- Opciones de aminoácidos inyectadas por JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TABLA DEL CÓDIGO GENÉTICO -->
+  <div class="modal-overlay" id="modal-genetic-code">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3>📖 Tabla del Código Genético Estándar (ARNm 5' → 3')</h3>
+        <button class="close-btn" id="btn-close-gc">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <input type="text" id="gc-search" placeholder="🔍 Buscar codón (ej. CCU) o aminoácido (ej. Pro)..." 
+                 style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.88rem; outline: none;">
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="genetic-code-table">
+            <thead>
+              <tr>
+                <th style="width: 14%;">1ª Base (5')</th>
+                <th style="width: 21%;">U</th>
+                <th style="width: 21%;">C</th>
+                <th style="width: 21%;">A</th>
+                <th style="width: 21%;">G</th>
+                <th style="width: 14%;">3ª Base (3')</th>
+              </tr>
+            </thead>
+            <tbody id="genetic-code-tbody">
+              <!-- Renderizado de los 64 codones -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =====================================================================
+       DICCIONARIO DEL CÓDIGO GENÉTICO Y BASES
+       ===================================================================== */
+    const GENETIC_CODE = {
+      'UUU': { aa: 'Phe', name: 'Fenilalanina' },
+      'UUC': { aa: 'Phe', name: 'Fenilalanina' },
+      'UUA': { aa: 'Leu', name: 'Leucina' },
+      'UUG': { aa: 'Leu', name: 'Leucina' },
+      'UCU': { aa: 'Ser', name: 'Serina' },
+      'UCC': { aa: 'Ser', name: 'Serina' },
+      'UCA': { aa: 'Ser', name: 'Serina' },
+      'UCG': { aa: 'Ser', name: 'Serina' },
+      'UAU': { aa: 'Tyr', name: 'Tirosina' },
+      'UAC': { aa: 'Tyr', name: 'Tirosina' },
+      'UAA': { aa: 'STOP', name: 'Codón Fin' },
+      'UAG': { aa: 'STOP', name: 'Codón Fin' },
+      'UGU': { aa: 'Cys', name: 'Cisteína' },
+      'UGC': { aa: 'Cys', name: 'Cisteína' },
+      'UGA': { aa: 'STOP', name: 'Codón Fin' },
+      'UGG': { aa: 'Trp', name: 'Triptófano' },
+
+      'CUU': { aa: 'Leu', name: 'Leucina' },
+      'CUC': { aa: 'Leu', name: 'Leucina' },
+      'CUA': { aa: 'Leu', name: 'Leucina' },
+      'CUG': { aa: 'Leu', name: 'Leucina' },
+      'CCU': { aa: 'Pro', name: 'Prolina' },
+      'CCC': { aa: 'Pro', name: 'Prolina' },
+      'CCA': { aa: 'Pro', name: 'Prolina' },
+      'CCG': { aa: 'Pro', name: 'Prolina' },
+      'CAU': { aa: 'His', name: 'Histidina' },
+      'CAC': { aa: 'His', name: 'Histidina' },
+      'CAA': { aa: 'Gln', name: 'Glutamina' },
+      'CAG': { aa: 'Gln', name: 'Glutamina' },
+      'CGU': { aa: 'Arg', name: 'Arginina' },
+      'CGC': { aa: 'Arg', name: 'Arginina' },
+      'CGA': { aa: 'Arg', name: 'Arginina' },
+      'CGG': { aa: 'Arg', name: 'Arginina' },
+
+      'AUU': { aa: 'Ile', name: 'Isoleucina' },
+      'AUC': { aa: 'Ile', name: 'Isoleucina' },
+      'AUA': { aa: 'Ile', name: 'Isoleucina' },
+      'AUG': { aa: 'Met', name: 'Metionina' },
+      'ACU': { aa: 'Thr', name: 'Treonina' },
+      'ACC': { aa: 'Thr', name: 'Treonina' },
+      'ACA': { aa: 'Thr', name: 'Treonina' },
+      'ACG': { aa: 'Thr', name: 'Treonina' },
+      'AAU': { aa: 'Asn', name: 'Asparagina' },
+      'AAC': { aa: 'Asn', name: 'Asparagina' },
+      'AAA': { aa: 'Lys', name: 'Lisina' },
+      'AAG': { aa: 'Lys', name: 'Lisina' },
+      'AGU': { aa: 'Ser', name: 'Serina' },
+      'AGC': { aa: 'Ser', name: 'Serina' },
+      'AGA': { aa: 'Arg', name: 'Arginina' },
+      'AGG': { aa: 'Arg', name: 'Arginina' },
+
+      'GUU': { aa: 'Val', name: 'Valina' },
+      'GUC': { aa: 'Val', name: 'Valina' },
+      'GUA': { aa: 'Val', name: 'Valina' },
+      'GUG': { aa: 'Val', name: 'Valina' },
+      'GCU': { aa: 'Ala', name: 'Alanina' },
+      'GCC': { aa: 'Ala', name: 'Alanina' },
+      'GCA': { aa: 'Ala', name: 'Alanina' },
+      'GCG': { aa: 'Ala', name: 'Alanina' },
+      'GAU': { aa: 'Asp', name: 'Ác. Aspártico' },
+      'GAC': { aa: 'Asp', name: 'Ác. Aspártico' },
+      'GAA': { aa: 'Glu', name: 'Ác. Glutámico' },
+      'GAG': { aa: 'Glu', name: 'Ác. Glutámico' },
+      'GGU': { aa: 'Gly', name: 'Glicina' },
+      'GGC': { aa: 'Gly', name: 'Glicina' },
+      'GGA': { aa: 'Gly', name: 'Glicina' },
+      'GGG': { aa: 'Gly', name: 'Glicina' }
+    };
+
+    const AMINO_ACID_LIST = [
+      { code: 'Met', name: 'Metionina' },
+      { code: 'Ala', name: 'Alanina' },
+      { code: 'Arg', name: 'Arginina' },
+      { code: 'Asn', name: 'Asparagina' },
+      { code: 'Asp', name: 'Ácido Aspártico' },
+      { code: 'Cys', name: 'Cisteína' },
+      { code: 'Gln', name: 'Glutamina' },
+      { code: 'Glu', name: 'Ácido Glutámico' },
+      { code: 'Gly', name: 'Glicina' },
+      { code: 'His', name: 'Histidina' },
+      { code: 'Ile', name: 'Isoleucina' },
+      { code: 'Leu', name: 'Leucina' },
+      { code: 'Lys', name: 'Lisina' },
+      { code: 'Phe', name: 'Fenilalanina' },
+      { code: 'Pro', name: 'Prolina' },
+      { code: 'Ser', name: 'Serina' },
+      { code: 'Thr', name: 'Treonina' },
+      { code: 'Trp', name: 'Triptófano' },
+      { code: 'Tyr', name: 'Tirosina' },
+      { code: 'Val', name: 'Valina' },
+      { code: 'STOP', name: 'Codón de Parada' }
+    ];
+
+    /* Amplia variedad de codones para fragmentos de ADN intermedios */
+    const ALL_CODONS = [
+      'AUG', 'GCU', 'GCC', 'GCA', 'GUU', 'GUC', 'GUA', 'CUU', 'CUC', 'CUA', 'CUG',
+      'AUU', 'AUC', 'AUA', 'UCU', 'UCC', 'UCA', 'CCU', 'CCC', 'CCA', 'ACU', 'ACC',
+      'ACA', 'UAU', 'UAC', 'CAU', 'CAC', 'CAA', 'CAG', 'AAU', 'AAC', 'AAA', 'AAG',
+      'GAU', 'GAC', 'GAA', 'GAG', 'UGU', 'UGC', 'UGG', 'CGU', 'CGC', 'AGA', 'AGG',
+      'GGU', 'GGC', 'GGA', 'UUU', 'UUC'
+    ];
+
+    /* =====================================================================
+       ESTADO DEL JUEGO
+       ===================================================================== */
+    let gameState = {
+      numCodons: 5,
+      difficulty: 'medium',
+      solution: {
+        adnCod: [],
+        adnMolde: [],
+        arnm: [],
+        arnt: [],
+        aminoacids: []
+      },
+      clues: {
+        adnCod: [],
+        adnMolde: [],
+        arnm: [],
+        arnt: [],
+        aminoacids: []
+      },
+      userAnswers: {
+        adnCod: [],
+        adnMolde: [],
+        arnm: [],
+        arnt: [],
+        aminoacids: []
+      },
+      completedGames: 0,
+      activeCell: null
+    };
+
+    /* =====================================================================
+       GENERACIÓN DEL SUDOKU GENÉTICO
+       ===================================================================== */
+    function generateNewGame() {
+      const numCodons = parseInt(document.getElementById('select-codons').value, 10);
+      const difficulty = document.getElementById('select-difficulty').value;
+      gameState.numCodons = numCodons;
+      gameState.difficulty = difficulty;
+
+      // 1. Fragmento intermedio: el primer codón NO necesita ser AUG (Metionina)
+      const arnmCodons = [];
+      for (let i = 0; i < numCodons; i++) {
+        const randomCodon = ALL_CODONS[Math.floor(Math.random() * ALL_CODONS.length)];
+        arnmCodons.push(randomCodon);
+      }
+
+      const totalBases = numCodons * 3;
+      const arnmBases = [];
+      const aminoacids = [];
+
+      arnmCodons.forEach(codon => {
+        for (let char of codon) arnmBases.push(char);
+        aminoacids.push(GENETIC_CODE[codon].aa);
+      });
+
+      // ADN Hebra Molde (3' -> 5'): Antiparalela y complementaria (A->T, U->A, C->G, G->C)
+      const adnMoldeBases = arnmBases.map(b => {
+        if (b === 'U') return 'A';
+        if (b === 'A') return 'T';
+        if (b === 'G') return 'C';
+        if (b === 'C') return 'G';
+        return 'N';
+      });
+
+      // ADN Hebra Codificante (5' -> 3'): Complementaria a la Molde (Chargaff: A=T, C=G)
+      const adnCodBases = adnMoldeBases.map(b => {
+        if (b === 'A') return 'T';
+        if (b === 'T') return 'A';
+        if (b === 'C') return 'G';
+        if (b === 'G') return 'C';
+        return 'N';
+      });
+
+      // ARNt Anticodón (3' -> 5'): Complementario al ARNm
+      const arntBases = arnmBases.map(b => {
+        if (b === 'U') return 'A';
+        if (b === 'A') return 'U';
+        if (b === 'G') return 'C';
+        if (b === 'C') return 'G';
+        return 'N';
+      });
+
+      gameState.solution = {
+        adnCod: adnCodBases,
+        adnMolde: adnMoldeBases,
+        arnm: arnmBases,
+        arnt: arntBases,
+        aminoacids: aminoacids
+      };
+
+      gameState.clues = {
+        adnCod: new Array(totalBases).fill(false),
+        adnMolde: new Array(totalBases).fill(false),
+        arnm: new Array(totalBases).fill(false),
+        arnt: new Array(totalBases).fill(false),
+        aminoacids: new Array(numCodons).fill(false)
+      };
+
+      gameState.userAnswers = {
+        adnCod: new Array(totalBases).fill(''),
+        adnMolde: new Array(totalBases).fill(''),
+        arnm: new Array(totalBases).fill(''),
+        arnt: new Array(totalBases).fill(''),
+        aminoacids: new Array(numCodons).fill('')
+      };
+
+      let clueRatio = 0.45;
+      if (difficulty === 'easy') clueRatio = 0.62;
+      if (difficulty === 'hard') clueRatio = 0.32;
+
+      for (let c = 0; c < totalBases; c++) {
+        const rows = ['adnCod', 'adnMolde', 'arnm', 'arnt'];
+        const primaryRow = rows[Math.floor(Math.random() * rows.length)];
+        gameState.clues[primaryRow][c] = true;
+        gameState.userAnswers[primaryRow][c] = gameState.solution[primaryRow][c];
+
+        rows.forEach(r => {
+          if (r !== primaryRow && Math.random() < (clueRatio - 0.25)) {
+            gameState.clues[r][c] = true;
+            gameState.userAnswers[r][c] = gameState.solution[r][c];
+          }
+        });
+      }
+
+      for (let k = 0; k < numCodons; k++) {
+        if (Math.random() < clueRatio) {
+          gameState.clues.aminoacids[k] = true;
+          gameState.userAnswers.aminoacids[k] = gameState.solution.aminoacids[k];
+        }
+      }
+
+      renderBoard();
+      updateScoreboard(0, 0, false);
+      hideFeedback();
+    }
+
+    /* =====================================================================
+       RENDERIZADO DEL TABLERO
+       ===================================================================== */
+    function renderBoard() {
+      const table = document.getElementById('sudoku-table');
+      table.innerHTML = '';
+      const numCodons = gameState.numCodons;
+      const totalBases = numCodons * 3;
+
+      const thead = document.createElement('thead');
+      const headerTr = document.createElement('tr');
+      
+      const cornerTh = document.createElement('th');
+      cornerTh.className = 'row-header';
+      cornerTh.innerHTML = `<span style="color: #64748B;">Nivel Molecular</span>`;
+      headerTr.appendChild(cornerTh);
+
+      for (let i = 0; i < numCodons; i++) {
+        const codonTh = document.createElement('th');
+        codonTh.colSpan = 3;
+        codonTh.className = 'codon-col-header triplet-separator-right';
+        codonTh.innerHTML = `Codón ${i + 1}`;
+        headerTr.appendChild(codonTh);
+      }
+      thead.appendChild(headerTr);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+
+      const rowsConfig = [
+        {
+          id: 'adnCod',
+          className: 'row-adn-cod',
+          title: 'ADN Codificante',
+          polarity: "Sentido 5' → 3'",
+          tagColor: 'var(--adn-cod-tag)'
+        },
+        {
+          id: 'adnMolde',
+          className: 'row-adn-molde',
+          title: 'ADN Molde',
+          polarity: "Sentido 3' → 5' (Transcrito)",
+          tagColor: 'var(--adn-molde-tag)'
+        },
+        {
+          id: 'arnm',
+          className: 'row-arnm',
+          title: 'ARNm',
+          polarity: "Sentido 5' → 3' (Mensajero)",
+          tagColor: 'var(--arnm-tag)'
+        },
+        {
+          id: 'arnt',
+          className: 'row-arnt',
+          title: 'ARNt Anticodón',
+          polarity: "Sentido 3' → 5' (Transferencia)",
+          tagColor: 'var(--arnt-tag)'
+        }
+      ];
+
+      rowsConfig.forEach(rowConf => {
+        const tr = document.createElement('tr');
+        tr.className = rowConf.className;
+
+        const th = document.createElement('th');
+        th.className = 'row-header';
+        th.innerHTML = `
+          <div class="title" style="color: ${rowConf.tagColor};">
+            <span>●</span> ${rowConf.title}
+          </div>
+          <div class="polarity">${rowConf.polarity}</div>
+        `;
+        tr.appendChild(th);
+
+        for (let col = 0; col < totalBases; col++) {
+          const td = document.createElement('td');
+          td.className = 'cell-td';
+          if ((col + 1) % 3 === 0) {
+            td.classList.add('triplet-separator-right');
+          }
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cell-input-wrapper';
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.maxLength = 1;
+          input.className = 'cell-base';
+          input.dataset.row = rowConf.id;
+          input.dataset.col = col;
+
+          const isClue = gameState.clues[rowConf.id][col];
+          const val = gameState.userAnswers[rowConf.id][col];
+
+          if (isClue) {
+            input.value = val;
+            input.readOnly = true;
+            input.classList.add('is-clue');
+            applyBaseStyle(input, val);
+          } else {
+            input.value = val || '';
+            if (val) applyBaseStyle(input, val);
+
+            input.addEventListener('focus', () => {
+              gameState.activeCell = { row: rowConf.id, col: col, type: 'base' };
+            });
+
+            input.addEventListener('input', () => {
+              handleBaseInput(input, rowConf.id, col);
+            });
+
+            input.addEventListener('keydown', (e) => {
+              handleKeyNav(e, rowConf.id, col);
+            });
+          }
+
+          wrapper.appendChild(input);
+          td.appendChild(wrapper);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+
+      const trAA = document.createElement('tr');
+      trAA.className = 'row-aa';
+
+      const thAA = document.createElement('th');
+      thAA.className = 'row-header';
+      thAA.innerHTML = `
+        <div class="title" style="color: var(--aa-tag);">
+          <span>●</span> Aminoácido
+        </div>
+        <div class="polarity">Péptido / Proteína</div>
+      `;
+      trAA.appendChild(thAA);
+
+      for (let k = 0; k < numCodons; k++) {
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.className = 'cell-td triplet-separator-right aa-cell-wrapper';
+
+        const aaBtn = document.createElement('button');
+        aaBtn.className = 'aa-btn';
+        aaBtn.dataset.codonIndex = k;
+
+        const isClue = gameState.clues.aminoacids[k];
+        const val = gameState.userAnswers.aminoacids[k];
+
+        if (isClue) {
+          aaBtn.textContent = val;
+          aaBtn.classList.add('is-clue');
+        } else {
+          aaBtn.textContent = val ? val : '— Elegir —';
+          if (!val) aaBtn.style.color = '#94A3B8';
+
+          aaBtn.addEventListener('click', () => {
+            openAminoAcidSelector(k);
+          });
+        }
+
+        td.appendChild(aaBtn);
+        trAA.appendChild(td);
+      }
+      tbody.appendChild(trAA);
+      table.appendChild(tbody);
+    }
+
+    /* =====================================================================
+       INTERACCIÓN Y VALIDACIÓN DE TECLADO
+       ===================================================================== */
+    function applyBaseStyle(input, val) {
+      input.classList.remove('val-A', 'val-T', 'val-U', 'val-C', 'val-G');
+      if (val === 'A') input.classList.add('val-A');
+      if (val === 'T') input.classList.add('val-T');
+      if (val === 'U') input.classList.add('val-U');
+      if (val === 'C') input.classList.add('val-C');
+      if (val === 'G') input.classList.add('val-G');
+    }
+
+    function handleBaseInput(input, rowId, col) {
+      let char = input.value.trim().toUpperCase();
+      const isRNA = (rowId === 'arnm' || rowId === 'arnt');
+      const validChars = isRNA ? ['A', 'U', 'C', 'G'] : ['A', 'T', 'C', 'G'];
+
+      if (!validChars.includes(char)) {
+        input.value = '';
+        applyBaseStyle(input, '');
+        gameState.userAnswers[rowId][col] = '';
+        return;
+      }
+
+      input.value = char;
+      applyBaseStyle(input, char);
+      gameState.userAnswers[rowId][col] = char;
+      input.classList.remove('correct', 'incorrect');
+
+      focusNextEmptyCell(rowId, col);
+    }
+
+    function focusNextEmptyCell(rowId, col) {
+      const inputs = Array.from(document.querySelectorAll(`input.cell-base[data-row="${rowId}"]`));
+      for (let i = col + 1; i < inputs.length; i++) {
+        if (!inputs[i].readOnly && !inputs[i].value) {
+          inputs[i].focus();
+          inputs[i].select();
+          return;
+        }
+      }
+    }
+
+    function handleKeyNav(e, rowId, col) {
+      const totalBases = gameState.numCodons * 3;
+      if (e.key === 'ArrowRight' && col < totalBases - 1) {
+        const next = document.querySelector(`input.cell-base[data-row="${rowId}"][data-col="${col + 1}"]`);
+        if (next) next.focus();
+      } else if (e.key === 'ArrowLeft' && col > 0) {
+        const prev = document.querySelector(`input.cell-base[data-row="${rowId}"][data-col="${col - 1}"]`);
+        if (prev) prev.focus();
+      } else if (e.key === 'Backspace' && !e.target.value && col > 0) {
+        const prev = document.querySelector(`input.cell-base[data-row="${rowId}"][data-col="${col - 1}"]`);
+        if (prev && !prev.readOnly) {
+          prev.focus();
+          prev.value = '';
+          applyBaseStyle(prev, '');
+          gameState.userAnswers[rowId][col - 1] = '';
+        }
+      }
+    }
+
+    document.querySelectorAll('.key-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        if (!gameState.activeCell) return;
+
+        const { row, col, type } = gameState.activeCell;
+        if (type !== 'base') return;
+
+        const input = document.querySelector(`input.cell-base[data-row="${row}"][data-col="${col}"]`);
+        if (!input || input.readOnly) return;
+
+        if (key === 'BACKSPACE') {
+          input.value = '';
+          applyBaseStyle(input, '');
+          gameState.userAnswers[row][col] = '';
+          input.classList.remove('correct', 'incorrect');
+        } else {
+          input.value = key;
+          handleBaseInput(input, row, col);
+        }
+        input.focus();
+      });
+    });
+
+    /* =====================================================================
+       SELECTOR MODAL DE AMINOÁCIDOS
+       ===================================================================== */
+    let currentSelectingCodonIndex = null;
+
+    function initAminoAcidSelector() {
+      const container = document.getElementById('aa-options-container');
+      container.innerHTML = '';
+
+      AMINO_ACID_LIST.forEach(item => {
+        const btn = document.createElement('div');
+        btn.className = 'aa-select-option';
+        btn.innerHTML = `
+          <div class="symbol">${item.code}</div>
+          <div class="name">${item.name}</div>
+        `;
+        btn.addEventListener('click', () => {
+          selectAminoAcid(item.code);
+        });
+        container.appendChild(btn);
+      });
+
+      document.getElementById('btn-close-aa').addEventListener('click', closeAminoAcidSelector);
+      document.getElementById('modal-aa-selector').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-aa-selector') closeAminoAcidSelector();
+      });
+    }
+
+    function openAminoAcidSelector(codonIndex) {
+      currentSelectingCodonIndex = codonIndex;
+      document.getElementById('modal-aa-title').textContent = `Seleccionar Aminoácido (Codón ${codonIndex + 1})`;
+      document.getElementById('modal-aa-selector').classList.add('active');
+    }
+
+    function closeAminoAcidSelector() {
+      document.getElementById('modal-aa-selector').classList.remove('active');
+      currentSelectingCodonIndex = null;
+    }
+
+    function selectAminoAcid(aaCode) {
+      if (currentSelectingCodonIndex === null) return;
+      const k = currentSelectingCodonIndex;
+      gameState.userAnswers.aminoacids[k] = aaCode;
+
+      const btn = document.querySelector(`button.aa-btn[data-codon-index="${k}"]`);
+      if (btn) {
+        btn.textContent = aaCode;
+        btn.style.color = '#5B21B6';
+        btn.classList.remove('correct', 'incorrect');
+      }
+
+      closeAminoAcidSelector();
+    }
+
+    /* =====================================================================
+       TABLA DEL CÓDIGO GENÉTICO Y BÚSQUEDA
+       ===================================================================== */
+    function initGeneticCodeModal() {
+      const tbody = document.getElementById('genetic-code-tbody');
+      tbody.innerHTML = '';
+      const bases = ['U', 'C', 'A', 'G'];
+
+      bases.forEach(first => {
+        bases.forEach((third, idx) => {
+          const tr = document.createElement('tr');
+
+          if (idx === 0) {
+            const thFirst = document.createElement('th');
+            thFirst.rowSpan = 4;
+            thFirst.textContent = first;
+            thFirst.style.fontSize = '1.1rem';
+            tr.appendChild(thFirst);
+          }
+
+          bases.forEach(second => {
+            const td = document.createElement('td');
+            const codon = `${first}${second}${third}`;
+            const info = GENETIC_CODE[codon];
+            const isStop = info.aa === 'STOP';
+            
+            td.innerHTML = `
+              <span class="gc-codon-pill ${isStop ? 'val-A' : 'val-U'}">${codon}</span>
+              <strong style="color: ${isStop ? '#BE123C' : '#4338CA'};">${info.aa}</strong>
+              <div style="font-size: 0.7rem; color: #64748B;">${info.name}</div>
+            `;
+            td.dataset.codon = codon;
+            td.dataset.aa = info.aa.toLowerCase();
+            td.dataset.name = info.name.toLowerCase();
+            tr.appendChild(td);
+          });
+
+          const thThird = document.createElement('th');
+          thThird.textContent = third;
+          tr.appendChild(thThird);
+
+          tbody.appendChild(tr);
+        });
+      });
+
+      const searchInput = document.getElementById('gc-search');
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim().toLowerCase();
+        document.querySelectorAll('#genetic-code-tbody td').forEach(td => {
+          if (!query) {
+            td.style.backgroundColor = '';
+            td.style.outline = '';
+            return;
+          }
+          const matches = td.dataset.codon.toLowerCase().includes(query) ||
+                          td.dataset.aa.includes(query) ||
+                          td.dataset.name.includes(query);
+          if (matches) {
+            td.style.backgroundColor = '#FEF08A';
+            td.style.outline = '2px solid #EAB308';
+          } else {
+            td.style.backgroundColor = '';
+            td.style.outline = '';
+          }
+        });
+      });
+
+      document.getElementById('btn-open-code').addEventListener('click', () => {
+        document.getElementById('modal-genetic-code').classList.add('active');
+        searchInput.focus();
+      });
+
+      document.getElementById('btn-close-gc').addEventListener('click', () => {
+        document.getElementById('modal-genetic-code').classList.remove('active');
+      });
+
+      document.getElementById('modal-genetic-code').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-genetic-code') {
+          document.getElementById('modal-genetic-code').classList.remove('active');
+        }
+      });
+    }
+
+    /* =====================================================================
+       COMPROBACIÓN DE LA SOLUCIÓN Y MARCADOR DE ACIERTOS
+       ===================================================================== */
+    function checkSolution() {
+      const numCodons = gameState.numCodons;
+      const totalBases = numCodons * 3;
+      let totalEmpty = 0;
+      let correctCount = 0;
+      let incorrectCount = 0;
+
+      const rows = ['adnCod', 'adnMolde', 'arnm', 'arnt'];
+
+      rows.forEach(r => {
+        for (let col = 0; col < totalBases; col++) {
+          const isClue = gameState.clues[r][col];
+          if (!isClue) {
+            totalEmpty++;
+            const userVal = gameState.userAnswers[r][col];
+            const solVal = gameState.solution[r][col];
+            const input = document.querySelector(`input.cell-base[data-row="${r}"][data-col="${col}"]`);
+
+            if (input) {
+              input.classList.remove('correct', 'incorrect');
+              if (userVal === solVal) {
+                input.classList.add('correct');
+                correctCount++;
+              } else {
+                input.classList.add('incorrect');
+                incorrectCount++;
+              }
+            }
+          }
+        }
+      });
+
+      for (let k = 0; k < numCodons; k++) {
+        const isClue = gameState.clues.aminoacids[k];
+        if (!isClue) {
+          totalEmpty++;
+          const userVal = gameState.userAnswers.aminoacids[k];
+          const solVal = gameState.solution.aminoacids[k];
+          const btn = document.querySelector(`button.aa-btn[data-codon-index="${k}"]`);
+
+          if (btn) {
+            btn.classList.remove('correct', 'incorrect');
+            if (userVal === solVal) {
+              btn.classList.add('correct');
+              correctCount++;
+            } else {
+              btn.classList.add('incorrect');
+              incorrectCount++;
+            }
+          }
+        }
+      }
+
+      const isCompleteWin = (correctCount === totalEmpty && totalEmpty > 0);
+      updateScoreboard(correctCount, totalEmpty, isCompleteWin);
+      showFeedback(correctCount, totalEmpty);
+
+      if (isCompleteWin) {
+        gameState.completedGames++;
+        document.getElementById('stat-completed').textContent = gameState.completedGames;
+        launchConfetti();
+      }
+    }
+
+    function updateScoreboard(correct, total, isWin) {
+      const hitsEl = document.getElementById('stat-hits');
+      const accEl = document.getElementById('stat-accuracy');
+
+      hitsEl.textContent = `${correct} / ${total}`;
+      const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+      accEl.textContent = `${percentage}%`;
+
+      if (isWin) {
+        accEl.style.color = '#16A34A';
+      } else {
+        accEl.style.color = '#1E293B';
+      }
+    }
+
+    function showFeedback(correct, total) {
+      const banner = document.getElementById('feedback-banner');
+      const msg = document.getElementById('feedback-msg');
+      const sub = document.getElementById('feedback-sub');
+
+      banner.className = 'feedback-banner';
+
+      if (correct === total) {
+        banner.classList.add('success');
+        msg.textContent = '🎉 ¡Enhorabuena! Has completado el Sudoku Genético correctamente.';
+        sub.textContent = 'Has demostrado dominar la complementariedad y la traducción del código genético.';
+      } else if (correct > 0) {
+        banner.classList.add('partial');
+        msg.textContent = `Tienes ${correct} de ${total} aciertos (${Math.round((correct / total) * 100)}%).`;
+        sub.textContent = 'Revisa las casillas con borde rojo: comprueba la complementariedad entre hebras o la tabla de codones.';
+      } else {
+        banner.classList.add('error');
+        msg.textContent = 'Ninguna casilla rellenada coincide con la solución.';
+        sub.textContent = 'Comprueba las parejas de bases correspondientes y la traducción del ARNm.';
+      }
+    }
+
+    function hideFeedback() {
+      const banner = document.getElementById('feedback-banner');
+      banner.className = 'feedback-banner';
+      banner.style.display = 'none';
+    }
+
+    function giveHint() {
+      const candidates = [];
+      const rows = ['adnCod', 'adnMolde', 'arnm', 'arnt'];
+      const totalBases = gameState.numCodons * 3;
+
+      rows.forEach(r => {
+        for (let col = 0; col < totalBases; col++) {
+          if (!gameState.clues[r][col] && gameState.userAnswers[r][col] !== gameState.solution[r][col]) {
+            candidates.push({ type: 'base', row: r, col: col });
+          }
+        }
+      });
+
+      for (let k = 0; k < gameState.numCodons; k++) {
+        if (!gameState.clues.aminoacids[k] && gameState.userAnswers.aminoacids[k] !== gameState.solution.aminoacids[k]) {
+          candidates.push({ type: 'aa', codonIndex: k });
+        }
+      }
+
+      if (candidates.length === 0) {
+        alert('¡Todas las casillas ya están resueltas correctamente!');
+        return;
+      }
+
+      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      if (pick.type === 'base') {
+        const correctVal = gameState.solution[pick.row][pick.col];
+        gameState.userAnswers[pick.row][pick.col] = correctVal;
+        const input = document.querySelector(`input.cell-base[data-row="${pick.row}"][data-col="${pick.col}"]`);
+        if (input) {
+          input.value = correctVal;
+          applyBaseStyle(input, correctVal);
+          input.classList.remove('incorrect');
+          input.classList.add('correct');
+        }
+      } else {
+        const correctVal = gameState.solution.aminoacids[pick.codonIndex];
+        gameState.userAnswers[pick.codonIndex] = correctVal;
+        const btn = document.querySelector(`button.aa-btn[data-codon-index="${pick.codonIndex}"]`);
+        if (btn) {
+          btn.textContent = correctVal;
+          btn.classList.remove('incorrect');
+          btn.classList.add('correct');
+        }
+      }
+    }
+
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#10B981', '#6366F1', '#F59E0B', '#EC4899', '#3B82F6', '#8B5CF6'];
+
+      for (let i = 0; i < 90; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height * 0.4,
+          r: Math.random() * 5 + 3,
+          d: Math.random() * 50 + 10,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          tilt: Math.floor(Math.random() * 10) - 10,
+          tiltAngleIncremental: (Math.random() * 0.07) + 0.05,
+          tiltAngle: 0
+        });
+      }
+
+      let frameCount = 0;
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.tiltAngle += p.tiltAngleIncremental;
+          p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+          p.tilt = Math.sin(p.tiltAngle - (i / 3)) * 12;
+
+          ctx.beginPath();
+          ctx.lineWidth = p.r;
+          ctx.strokeStyle = p.color;
+          ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+          ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+          ctx.stroke();
+        }
+
+        frameCount++;
+        if (frameCount < 160) {
+          requestAnimationFrame(render);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      render();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initAminoAcidSelector();
+      initGeneticCodeModal();
+
+      document.getElementById('btn-check').addEventListener('click', checkSolution);
+      document.getElementById('btn-restart').addEventListener('click', generateNewGame);
+      document.getElementById('btn-hint').addEventListener('click', giveHint);
+
+      document.getElementById('select-difficulty').addEventListener('change', generateNewGame);
+      document.getElementById('select-codons').addEventListener('change', generateNewGame);
+
+      generateNewGame();
+    });
+  </script>
+</body>
+</html>
