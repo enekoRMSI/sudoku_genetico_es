@@ -702,9 +702,6 @@
         <button class="btn btn-secondary" id="btn-restart">
           <span>🔄</span> Reiniciar (Nuevo Juego)
         </button>
-        <button class="btn btn-outline" id="btn-hint" title="Revela una casilla si te quedas atascado">
-          <span>💡</span> Pedir Pista
-        </button>
       </div>
 
       <div class="controls-group">
@@ -1553,52 +1550,6 @@
       banner.style.display = 'none';
     }
 
-    function giveHint() {
-      const candidates = [];
-      const rows = ['adnCod', 'adnMolde', 'arnm', 'arnt'];
-      const totalBases = gameState.numCodons * 3;
-
-      rows.forEach(r => {
-        for (let col = 0; col < totalBases; col++) {
-          if (!gameState.clues[r][col] && gameState.userAnswers[r][col] !== gameState.solution[r][col]) {
-            candidates.push({ type: 'base', row: r, col: col });
-          }
-        }
-      });
-
-      for (let k = 0; k < gameState.numCodons; k++) {
-        if (!gameState.clues.aminoacids[k] && gameState.userAnswers.aminoacids[k] !== gameState.solution.aminoacids[k]) {
-          candidates.push({ type: 'aa', codonIndex: k });
-        }
-      }
-
-      if (candidates.length === 0) {
-        alert('¡Todas las casillas ya están resueltas correctamente!');
-        return;
-      }
-
-      const pick = candidates[Math.floor(Math.random() * candidates.length)];
-      if (pick.type === 'base') {
-        const correctVal = gameState.solution[pick.row][pick.col];
-        gameState.userAnswers[pick.row][pick.col] = correctVal;
-        const input = document.querySelector(`input.cell-base[data-row="${pick.row}"][data-col="${pick.col}"]`);
-        if (input) {
-          input.value = correctVal;
-          applyBaseStyle(input, correctVal);
-          input.classList.remove('incorrect');
-          input.classList.add('correct');
-        }
-      } else {
-        const correctVal = gameState.solution.aminoacids[pick.codonIndex];
-        gameState.userAnswers[pick.codonIndex] = correctVal;
-        const btn = document.querySelector(`button.aa-btn[data-codon-index="${pick.codonIndex}"]`);
-        if (btn) {
-          btn.textContent = correctVal;
-          btn.classList.remove('incorrect');
-          btn.classList.add('correct');
-        }
-      }
-    }
 
     function launchConfetti() {
       const canvas = document.getElementById('confetti-canvas');
@@ -1656,7 +1607,6 @@
 
       document.getElementById('btn-check').addEventListener('click', checkSolution);
       document.getElementById('btn-restart').addEventListener('click', generateNewGame);
-      document.getElementById('btn-hint').addEventListener('click', giveHint);
 
       document.getElementById('select-difficulty').addEventListener('change', generateNewGame);
       document.getElementById('select-codons').addEventListener('change', generateNewGame);
