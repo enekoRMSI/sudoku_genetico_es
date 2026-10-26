@@ -35,7 +35,6 @@ El alumnado debe completar las casillas vacías de una cuadrícula molecular ded
 - 📊 **Marcador en Tiempo Real:** Contador de aciertos ($X / \text{Total}$), porcentaje de precisión y partidas completadas.
 - ✓ **Comprobación Inmediata con Feedback:** Resalta casillas correctas en verde esmeralda e incorrectas en rojo carmesí con animación de aviso.
 - 📖 **Tabla del Código Genético Integrada:** Modal con buscador en tiempo real por codón o aminoácido.
-- 💡 **Sistema de Pistas:** Permite desvelar una casilla si el alumno se encuentra atascado.
 - 📱 **Totalmente Autónomo y Responsive:** Funciona en ordenadores, pizarras digitales, tabletas y móviles sin dependencias externas ni conexión a internet.
 
 ---
