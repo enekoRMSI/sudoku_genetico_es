@@ -54,10 +54,10 @@
       --base-c-color: #1D4ED8;
       --base-c-border: #93C5FD;
 
-      /* Guanina: Verde menta suave */
-      --base-g-bg: #DCFCE7;
-      --base-g-color: #15803D;
-      --base-g-border: #86EFAC;
+      /* Guanina: Rosa pastel suave (con matiz fucsia/chicle, sin confundirse con el rojo) */
+      --base-g-bg: #FFF0F7;
+      --base-g-color: #C026D3;
+      --base-g-border: #F9A8D4;
 
       /* Estados de validación claramente diferenciados */
       --success-bg: #DCFCE7;
@@ -230,11 +230,14 @@
     }
 
     .btn-accent {
-      background: #6366F1;
-      color: white;
+      background: #F8FAFC;
+      color: #4F46E5;
+      border: 1px solid #E2E8F0;
     }
     .btn-accent:hover {
-      background: #4F46E5;
+      background: #EEF2FF;
+      color: #4338CA;
+      border-color: #C7D2FE;
     }
 
     .btn-outline {
@@ -455,9 +458,9 @@
       box-shadow: var(--shadow-soft);
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 14px;
     }
 
     .keypad-keys {
@@ -669,10 +672,7 @@
     <!-- ENCABEZADO -->
     <header class="header">
       <div class="header-titles">
-        <h1>
-          <span class="badge-icon">🧬</span>
-          Sudoku Genético
-        </h1>
+        <h1>Sudoku Genético</h1>
         <p>Completa la cuadrícula combinando las tripletas de ADN, ARNm, ARNt y aminoácidos.</p>
       </div>
 
